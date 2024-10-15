@@ -2,6 +2,56 @@
 
 接口的 `X-Itouchtv-Ca-Signature` 在 wasm 内加密生成，把 wasm 当作一个包直接调用生成加密。
 
+## 2022-10-15 更新
+
+```js
+g.wbg.__wbg_newwithargs_a0432b7780c1dfa1 = function(A, g, I, B) {
+    return Y(S(K(A, g), K(I, B)))
+}
+```
+会返回一个加密函数，暂时解不开，复制网站上生成的 header，直接调用，不会失效
+
+源代码搜索 `out of js stack` 查看生成 header 代码。
+
+## signature 可重复使用
+
+复制网站上的接口的 header，Signature 可以重复使用
+
+```js
+const url = "https://gdtv-api.gdtv.cn/api/tvColumn/v1/tvColumn/43";
+var header = new Map([
+  ["Content-Type", "application/json"],
+  ["X-ITOUCHTV-Ca-Timestamp", 1728981010913],
+  ["X-ITOUCHTV-Ca-Signature", "RDoVy8LrsOfJis8h4T5VF1FucYkF117GZSRl+KNy/XY="],
+  ["X-ITOUCHTV-Ca-Key", "89541943007407288657755311868534"],
+  ["X-ITOUCHTV-CLIENT", "WEB_PC"],
+  ["X-ITOUCHTV-DEVICE-ID", "WEB_413b8160-696b-11ee-8e8e-87c7746ce010"],
+]);
+let headers = {};
+for (const [key, value] of header) {
+  headers[key] = value;
+}
+https
+  .get(url, { headers: headers }, (res) => {
+    let list = [];
+    res.on("data", (chunk) => {
+      list.push(chunk);
+    });
+    res.on("end", () => {
+      console.log("Response ended: ");
+      const data = JSON.parse(Buffer.concat(list).toString());
+      console.log(data);
+    });
+  })
+  .on("error", (err) => {
+    console.log("Error: ", err.message);
+  });
+```
+
+## 下载 wasm
+
+右击 `.wasm` 请求，open in new tab
+
 ## 使用
 
 `$ nodejs gdtv.js`
