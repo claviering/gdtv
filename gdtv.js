@@ -3,28 +3,119 @@ const https = require('https');
 const fs = require("fs");
 const wasmBuffer = fs.readFileSync("download.wasm");
 
-let location = {
-  host: "www.gdtv.cn",
-  hostname: "www.gdtv.cn",
-  href: "https://www.gdtv.cn/tvChannelDetail/43",
-  origin: "https://www.gdtv.cn",
-  protocol: "https:",
-  toString: function () {
-    return this.href
-  }
-};
-let self = {
-    self: {
-        document: true,
-        location
+delete process
+delete __filename;
+delete __dirname;
+
+function myProxy1(obj, name) {
+    const proxyCache = new Map();
+
+    // 增加对 Symbol.toPrimitive 的处理
+    function createProxy(target, name) {
+        if (proxyCache.has(target)) {
+            return proxyCache.get(target);  // 如果已经代理过，直接返回缓存的代理对象
+        }
+
+        const proxy = new Proxy(target, {
+            get(target, propKey, receiver) {
+                let temp = Reflect.get(target, propKey, receiver);
+
+                // 检查是否有 Symbol.toPrimitive 方法，进行处理
+                if (propKey === Symbol.toPrimitive) {
+                    return function (hint) {
+                        // 默认返回对象的字符串表示
+                        return target.toString ? target.toString() : `[Object ${name}]`;
+                    };
+                }
+
+                if (typeof temp === 'object' && temp !== null) {
+                    temp = createProxy(temp, `${name} => ${propKey.toString()}`);  // 懒代理
+                }
+
+                console.log(`${name} -> get ${propKey.toString()} return -> ${temp}`);
+                return temp;
+            },
+            set(target, propKey, value, receiver) {
+                const result = Reflect.set(target, propKey, value, receiver);
+                // console.log(`${name} -> set ${propKey.toString()} value -> ${value}`);
+                return result;
+            }
+        });
+
+        proxyCache.set(target, proxy);
+        return proxy;
     }
+
+    return createProxy(obj, name);
+}
+
+window = myProxy1(global, "window")
+function Window() {
+}
+Object.setPrototypeOf(window, Window.prototype)
+document = myProxy1({}, 'document');
+
+document.documentElement = myProxy1({}, "documentElement")
+document.toString = function () {
+    return '[object HTMLHtmlElement]'
+}
+document.documentElement.toString = function () {
+    return '[object HTMLHtmlElement]'
+}
+
+
+XMLHttpRequest = myProxy1({}, 'XMLHttpRequest');
+document.addEventListener = function (type, listener) {
+    console.log(type)
+}
+
+function HTMLElement() {
+}
+
+Object.setPrototypeOf(document.documentElement, HTMLElement.prototype)
+
+
+
+var _location = {
+    host: "www.gdtv.cn",
+    hostname: "www.gdtv.cn",
+    port: "",
+    href: "https://www.gdtv.cn/tvChannelDetail/43",
+    origin: "https://www.gdtv.cn",
+    protocol: "https:",
+    hash: "",
+    pathname: "/tvChannelDetail/43",
+    port: "",
+    assign: function () {
+    },
+    replace: function () {
+    },
+    reload: function () {
+    },
+    search: "",
+    ancestorOrigins: {}
 };
-let window = {
-    window: {
-        document: true,
-        location
-    }
-};
+location = myProxy1(_location, "location")
+location.toString = function () {
+    return "https://www.gdtv.cn/tvChannelDetail/43"
+}
+
+
+function Location() {
+}
+
+Object.setPrototypeOf(location, Location.prototype)
+document.location = location
+
+
+window.Location = Location
+
+window.Window = Window
+window.HTMLElement = HTMLElement
+window.location = location
+window.document = document
+
+
 let B = {};
 function g() {
     g = function() {
@@ -955,22 +1046,14 @@ const importObject = t();
 WebAssembly.instantiate(wasmBuffer, importObject).then((obj) => {
   O(obj.instance, obj.module);
   const url = "https://gdtv-api.gdtv.cn/api/tvColumn/v1/tvColumn/43";
-  var header = new Map([
-    ["Content-Type", "application/json"],
-    ["X-ITOUCHTV-Ca-Timestamp", 1728981010913],
-    ["X-ITOUCHTV-Ca-Signature", "RDoVy8LrsOfJis8h4T5VF1FucYkF117GZSRl+KNy/XY="],
-    ["X-ITOUCHTV-Ca-Key", "89541943007407288657755311868534"],
-    ["X-ITOUCHTV-CLIENT", "WEB_PC"],
-    ["X-ITOUCHTV-DEVICE-ID", "WEB_413b8160-696b-11ee-8e8e-87c7746ce010"],
-  ]);
-//   var header = B.a(
-//     "GET",
-//     "https://gdtv-api.gdtv.cn/api/tvColumn/v1/tvColumn/43",
-//     "WEB_413b8160-696b-11ee-8e8e-87c7746ce010",
-//     "WEB_PC",
-//     "",
-//     undefined
-//   );
+  var header = B.a(
+    "GET",
+    "https://gdtv-api.gdtv.cn/api/tvColumn/v1/tvColumn/43",
+    "WEB_413b8160-696b-11ee-8e8e-87c7746ce010",
+    "WEB_PC",
+    "",
+    undefined
+  );
   let headers = {};
   for (const [key, value] of header) {
     headers[key] = value;
